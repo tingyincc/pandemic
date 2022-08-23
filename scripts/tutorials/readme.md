@@ -51,7 +51,9 @@ After this tutorial, you should get an idea of what this repository is about. Yo
 <li><b>Run scripts/tutorials/7_run_pandemic_gym_env.py</b>. <br>Do this to understand how to use the environment. 
 <li><b>Run scripts/tutorials/8_manual_control.py</b> <br> This allows you to manually set the stage at each point. Use this to understand how the stages affect the case dynamics.
 <li><b>Run scripts/tutorials/9_example_policy_if_else.py</b> <br> This is an example policy implemented using an if-else statement based on the observation.
-<li><b>Read <a href="#xobs">Explaining the Observation and Action</a></b><br> This will help you understand the observation and make a custom policy for the next part of the tutorial.
+<li><b>Read <a href="#xobs">Explaining the Observation and Action</a></b><br> (below). This will help you understand the observation and make a custom policy for the next part of the tutorial.
+<li><b>Run scripts/tutorials/10_custom_policy_if_else.py </b><br> This is another example of a policy with an if-else statement. Try to replace the statements and create your own policy.
+<li><b>Run scripts/tutorials/11_custom_policy_test.py </b><br> Take your policy from scripts/tutorials/custom_policy_if_else.py and run this script to evaluate your policy over multiple episodes.
 
 <br><br>
 <h3 id="#xobs">Explaining the Observation and Action</h3>
@@ -92,8 +94,6 @@ After this tutorial, you should get an idea of what this repository is about. Yo
 
 <br><br>
 
-<li><b>Run scripts/tutorials/10_custom_policy_if_else.py </b><br> This is another example of a policy with an if-else statement. Try to replace the statements and create your own policy.
-<li><b>Run scripts/tutorials/11_custom_policy_test.py </b><br> Take your policy from scripts/tutorials/custom_policy_if_else.py and run this script to evaluate your policy over multiple episodes.
 </ol>
 
 <h2 id="#t2">Tutorial 2</h2>
@@ -108,31 +108,39 @@ PLEASE NOTE LINE NUMBER VALUES MAY CHANGE IF ADDITIONAL CHARACTERS OR LINES ARE 
 
 Steps
 <ol>
+<li><b>Switch to the Tutorial 2 branch via the following lines (run from the top level of the repository)</a></b>
+    
+```shell
+git fetch --all
+git checkout tut2
+```
+
 <li><b>Review <a href="#xobs">Explaining the Observation and Action</a></b>
 <li><b> Add Critical FLag </b><br>
 To modify the observation we can change the code at two levels. We can either change the structure of the simulator state or we can modify the final observation. For this tutorial we will modify the simulator state. The code for simulator state is in python/pandemic_simulator/environment/interfaces/sim_state.py
 
-For demonstration, we will be creating a new flag variable for the environment. This flag will check if the number of patients who are critical exceeds a threshold. The name of the variable should be `critical_above_threhsold`.
+For demonstration, we will be creating a new flag variable for the environment. This flag will check if the number of patients who are critical exceeds a threshold. The name of the variable should be `critical_above_threshold`. This variable is most similar to the existing `infection_above_threshold` variable. 
+
 <ol>
 <li><b>Modify simulator state template to add new flag.</b><br>
  Open python/pandemic_simulator/environment/interfaces/sim_state.py
 (Line 52) Add code for the new flag in the specified area. This change will allow the sim_state to hold the new flag. 
 
-<li><b>Modify simulator config to add threshold, as it is a characteristic of the simulator</b><br>
+<li><b>Modify simulator config to add the threshold, as it is a characteristic of the simulator</b><br>
  Open python/pandemic_simulator/environment/simulator_opts.py 
-(Line 49) Add code for a threshold to use for the flag and assign a default value of 10. The threshold is not a variable in the PandemicSimulator class
+(Line 48) Add code for a threshold to use for the flag and assign a default value of 10. The threshold is not a variable in the PandemicSimulator class
 as it is constant throughout the simulation and is a characteristic of the simulator.
 
 <li><b>Write code to incorporate the flag in the simulator</b><br>
 Open python/pandemic_simulator/environment/pandemic_sim.py 
-(Line 61,91,119) Here, we will have to modify the init function. This is to enable users to add a value for our new flag when initializing the 
+(Line 63,93,121) Here, we will have to modify the init function to add and initialize the new threshold variable. This is to enable users to add a value for our new flag when initializing the 
 Pandemic Simulator State.
 
-(Line 166) Change from_config function
+(Line 168) Change from_config function to pass in the new threshold variable. 
 
-(Line 323) Next we will have to modify the step function in pandemic_sim.py. This is to add code to update the simulator state after each timestep (hour).
+(Line 325) Next we will have to modify the step function in pandemic_sim.py. The step function updates the simulator state after each timestep (hour); please update the state to reflect the `critical_above_threshold` value. 
 
-(Line 414) Then set a default value for flag in the reset function.
+(Line 416) Then set a default value for the `critical_above_threshold` flag in the reset function.
 
 <li><b>Modify the observation for flag</b>
 Open python/pandemic_simulator/environment/interfaces/pandemic_observation.py
@@ -141,9 +149,10 @@ Open python/pandemic_simulator/environment/interfaces/pandemic_observation.py
 (Line 78) Add code to update flag in observation.
 </ol>
 
-<li>Add beta Using Testing data into the observation, considering a time period of 1 day.<br>
-<ul>
-<li>beta(t)=[None(t-1)-None(t)]/[None(t)*Infected(t)]. 
-<li>The variable should be accessible via obs.beta
-</ul>
+<li> [OPTIONAL] The simulator is installed as a Python package. Since we have modified the underlying package code, 
+    we need to reinstall the package in order for the changes to the code to be realized. From the top level of the PandemicSimulatorTutorial repository, run the following line again: <br>
+
+```shell
+python -m pip install -e .
+```
 </ol>
