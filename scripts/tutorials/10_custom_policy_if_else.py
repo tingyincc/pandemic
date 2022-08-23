@@ -20,14 +20,14 @@ def run_pandemic_gym_env() -> None:
 
     # make env
 
-    wrap = ps.env.PandemicGymEnv3Act.from_config(sim_config = sim_config, pandemic_regulations=ps.sh.austin_regulations)
+    wrap = ps.env.PandemicGymEnv.from_config(sim_config = sim_config, pandemic_regulations=ps.sh.austin_regulations)
 
     # setup viz
     viz = ps.viz.GymViz.from_config(sim_config=sim_config)
     sim_viz = ps.viz.SimViz.from_config(sim_config=sim_config)
 
     # run stage-0 action steps in the environment
-    wrap.env.reset()
+    wrap.reset()
     Reward = 0
     for i in trange(120, desc='Simulating day'):
         
@@ -47,14 +47,14 @@ def run_pandemic_gym_env() -> None:
             elif not obs.infection_above_threshold:
                 action = 0
             else:
-                action = -1
+                action = 4
             ########################################################################################################################################
 
         obs, reward, done, aux = wrap.step(action=int(action))  # here the action is the discrete regulation stage identifier
         print(obs)
         Reward += reward
         viz.record((obs, reward))
-        sim_viz.record_state(state = wrap.env.pandemic_sim.state)
+        sim_viz.record_state(state = wrap.pandemic_sim.state)
     # generate plots
     viz.plot()
     sim_viz.plot()
