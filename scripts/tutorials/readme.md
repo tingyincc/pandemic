@@ -22,8 +22,13 @@ You can replace pansim with a name of your choice. <b>Continue using this termin
 
 <li>Clone the repository this is done by entering the following in a terminal/command prompt window.
 
+With HTTPS: 
 ```shell
-git clone -b tst https://github.com/alfred100p/PandemicSimulator
+git clone https://github.com/cs395t-ethical-ai/PandemicSimulatorTutorial.git
+```
+With SSH
+```shell
+git clone git@github.com:cs395t-ethical-ai/PandemicSimulatorTutorial.git
 ```
 
 <li>Continue in the same terminal/command prompt. Change current directory and run setup.py
