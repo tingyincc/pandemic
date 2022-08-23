@@ -34,7 +34,7 @@ git clone git@github.com:cs395t-ethical-ai/PandemicSimulatorTutorial.git
 <li>Continue in the same terminal/command prompt. Change current directory and run setup.py
 
 ```shell
-cd PandemicSimulator
+cd PandemicSimulatorTutorial
 python -m pip install -e .
 ```
 </ol>
