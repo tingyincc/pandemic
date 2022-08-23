@@ -42,7 +42,7 @@ Welcome to the first tutorial.<br>
 After this tutorial, you should get an idea of what this repository is about. You will manually control the stage of response to a simulated pandemic. After that by studying the observations try to create a response policy using if-else statements. 
 
 <ol>
-<li><b>Read the <a href="https://arxiv.org/abs/2010.10560">Original Paper</a>.</b> <br>This will help you understand the background of this problem and the environment.
+<li><b>Skim the <a href="https://arxiv.org/abs/2010.10560">Original Paper</a>.</b> <br>This will help you understand the background of this problem and the environment.
 <li><b>Run scripts/tutorials/7_run_pandemic_gym_env.py</b>. <br>Do this to understand how to use the environment. 
 <li><b>Run scripts/tutorials/8_manual_control.py</b> <br> This allows you to manually set the stage at each point. Use this to understand how the stages affect the case dynamics.
 <li><b>Run scripts/tutorials/9_example_policy_if_else.py</b> <br> This is an example policy implemented using an if-else statement based on the observation.
