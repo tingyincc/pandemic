@@ -156,3 +156,11 @@ Open python/pandemic_simulator/environment/interfaces/pandemic_observation.py
 python -m pip install -e .
 ```
 </ol>
+
+<h2 id="#t2">Tutorial 3</h2>
+1. switch to the tut3 branch. 
+2. pip install tianshou. 
+3. Do students need to install tensorboard? check this!
+4. Point out what changes have been made to the environment to enable running the RL scriptp. 
+5. Run the RL training script. Have students check that the model and logs have been saved in the correct directory.
+6. Teach students how to view tensorboard logs. There should be separate instructions for opening tensorboard locally versus on the server. 
