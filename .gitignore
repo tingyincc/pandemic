@@ -27,3 +27,5 @@ pip.log
 
 test-results
 *.egg-info/
+
+scripts/tutorials/log/
