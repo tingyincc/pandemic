@@ -93,15 +93,17 @@ class PandemicGymEnv(gym.Env):
                 RewardFunctionFactory.default(RewardFunctionType.INFECTION_SUMMARY_ABOVE_THRESHOLD,
                                               summary_type=InfectionSummary.CRITICAL,
                                               threshold=sim_config.max_hospital_capacity),
-                RewardFunctionFactory.default(RewardFunctionType.INFECTION_SUMMARY_ABOVE_THRESHOLD,
-                                              summary_type=InfectionSummary.CRITICAL,
-                                              threshold=3 * sim_config.max_hospital_capacity),
+                # RewardFunctionFactory.default(RewardFunctionType.INFECTION_SUMMARY_ABOVE_THRESHOLD,
+                                              # summary_type=InfectionSummary.CRITICAL,
+                                              # threshold=3 * sim_config.max_hospital_capacity),
                 RewardFunctionFactory.default(RewardFunctionType.LOWER_STAGE,
                                               num_stages=len(pandemic_regulations)),
                 RewardFunctionFactory.default(RewardFunctionType.SMOOTH_STAGE_CHANGES,
                                               num_stages=len(pandemic_regulations))
             ],
-            weights=[.4, 1, .1, 0.02]
+            weights=[.4, 
+            # 1,
+            .1, 0.02]
         )
 
         return PandemicGymEnv(pandemic_sim=sim,
@@ -170,13 +172,15 @@ class PandemicGymEnv(gym.Env):
     def render(self, mode: str = 'human') -> bool:
         pass
 
+def norm_obs(x, obs_min, obs_max):
+    return (x - obs_min) / (obs_max - obs_min)
+
 class PandemicGymEnv3Act(gym.ActionWrapper):
     def __init__(self, env: PandemicGymEnv):
         super().__init__(env)
         self.env = env
         self.max_days = 120
 
-        obs_upper_lim = 1000
         # self.observation_space = gym.spaces.Dict(dict(
         #                               global_infection_summary=gym.spaces.MultiDiscrete(np.ones(shape=(1, 1, 5))*obs_upper_lim, dtype=np.float32),
         #                               global_testing_summary=gym.spaces.MultiDiscrete(np.ones(shape=(1, 1, 5))*obs_upper_lim, dtype=np.float32),
@@ -194,7 +198,16 @@ class PandemicGymEnv3Act(gym.ActionWrapper):
         time_day: (1, 1, 1)
         unlocked_non_essential_business_locations - this is removed because it is unused
         '''
-        self.observation_space = gym.spaces.MultiDiscrete(np.ones(shape=(1, 1, 5+5+1+1+1))*obs_upper_lim, dtype=np.float32)
+        self.obs_norm_bds = {
+            "global_infection_summary": [0, 1000], # obs min, obs max
+            "global_testing_summary": [0, 1000],
+            "stage": [0, 4],
+            "infection_above_threshold": [0, 1],
+            "time_day": [0, self.max_days],
+        }
+        obs_upper_lim = 1 # 1000
+        self.observation_space = gym.spaces.MultiDiscrete(np.ones(shape=(1, 1, 5+5+1+1+1))*obs_upper_lim, 
+                                                          dtype=np.float32)
 
     @classmethod
     def from_config(self,
@@ -214,22 +227,25 @@ class PandemicGymEnv3Act(gym.ActionWrapper):
 
         return PandemicGymEnv3Act(env=env)
 
-    def step(self, action):
-        action = int(action)
-        state, reward, done, info = self.env.step(self.action(action))
-        flattened_state = np.concatenate([state.global_infection_summary,
-                                          state.global_testing_summary,
-                                          state.stage,
-                                          state.infection_above_threshold,
-                                          state.time_day
-                                          # unlocked_non_essential_business_locations is always none so it is excluded
+    def flatten_obs(self, obs:PandemicObservation) -> np.ndarray:
+        return np.concatenate([norm_obs(obs.global_infection_summary, *self.obs_norm_bds["global_infection_summary"]),
+                               norm_obs(obs.global_testing_summary, *self.obs_norm_bds["global_testing_summary"]),
+                               norm_obs(obs.stage, *self.obs_norm_bds["stage"]),
+                               norm_obs(obs.infection_above_threshold, *self.obs_norm_bds["infection_above_threshold"]),
+                               norm_obs(obs.time_day, *self.obs_norm_bds["time_day"])
+                               # unlocked_non_essential_business_locations is always none so it is excluded
             ], axis=-1)
 
+    def step(self, action):
+        action = int(action)
+        # obs, reward, done, info = self.env.step(self.action(action))
+        obs, reward, done, info = self.env.step(action)
+        flattened_obs = self.flatten_obs(obs)
         # also return done if we reach the maximal number of days
         self.current_days += 1
         done = done or (self.current_days >= self.max_days)
 
-        return flattened_state, reward, done, info
+        return flattened_obs, reward, done, info
 
     def action(self, action):
         assert self.action_space.contains(action), "%r (%s) invalid" % (action, type(action))
@@ -237,12 +253,5 @@ class PandemicGymEnv3Act(gym.ActionWrapper):
     
     def reset(self):
         self.current_days = 0
-        state = self.env.reset()
-        flattened_state = np.concatenate([state.global_infection_summary,
-                                          state.global_testing_summary,
-                                          state.stage,
-                                          state.infection_above_threshold,
-                                          state.time_day
-                                          # unlocked_non_essential_business_locations is always none so it is excluded
-            ], axis=-1)
-        return flattened_state
+        obs = self.env.reset()
+        return self.flatten_obs(obs)

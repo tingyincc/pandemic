@@ -2,13 +2,14 @@
 import argparse
 import os
 import pprint
+import datetime
 
 import gym
 import numpy as np
 import torch
 from torch.utils.tensorboard import SummaryWriter
 
-from tianshou.data import Collector, VectorReplayBuffer
+from tianshou.data import Collector, VectorReplayBuffer, ReplayBuffer
 from tianshou.env import DummyVectorEnv, SubprocVectorEnv
 from tianshou.policy import DQNPolicy
 from tianshou.trainer import offpolicy_trainer
@@ -28,14 +29,15 @@ def get_args():
     # the parameters are found by Optuna
     parser.add_argument('--task', type=str, default='pansim')
     parser.add_argument('--seed', type=int, default=0)
-    parser.add_argument('--eps-test', type=float, default=0.00)
-    parser.add_argument('--eps-train', type=float, default=0.2)
+    parser.add_argument('--eps-test', type=float, default=0.0)
+    parser.add_argument('--eps-train-init', type=float, default=0.2)
+    parser.add_argument('--eps-train-final', type=float, default=0.01)
     parser.add_argument('--buffer-size', type=int, default=1000)
     parser.add_argument('--lr', type=float, default=0.013)
     parser.add_argument('--gamma', type=float, default=0.99)
     parser.add_argument('--n-step', type=int, default=4)
-    parser.add_argument('--target-update-freq', type=int, default=500)
-    parser.add_argument('--n-epoch', type=int, default=5)
+    parser.add_argument('--target-update-freq', type=int, default=500) # this is every 500 UPDATES; test value=2
+    parser.add_argument('--n-epoch', type=int, default=100)
     parser.add_argument('--step-per-epoch', type=int, default=3000)
     parser.add_argument('--step-per-collect', type=int, default=360)
     parser.add_argument('--update-per-step', type=float, default=0.0625)
@@ -50,7 +52,8 @@ def get_args():
     parser.add_argument('--training-num', type=int, default=1)
     parser.add_argument('--test-num', type=int, default=1)
     parser.add_argument('--logdir', type=str, default='log')
-    parser.add_argument('--log_interval', type=int, default=500, help="timesteps between logging")
+    parser.add_argument('--log-interval', type=int, default=500, help="timesteps between logging")
+    parser.add_argument('--expt-name', type=str, default="", help="optional name for logs")
     parser.add_argument('--render', type=float, default=0.)
     parser.add_argument(
         '--device', type=str, default='cuda' if torch.cuda.is_available() else 'cpu'
@@ -82,13 +85,16 @@ def train_dqn(args=get_args()):
             ]
         )
 
-    make_env = lambda: ps.env.PandemicGymEnv3Act.from_config(sim_config=sim_config, 
-        pandemic_regulations=ps.sh.austin_regulations,
-        done_fn=done_fn)
+    train_envs = ps.env.PandemicGymEnv3Act.from_config(sim_config=sim_config, 
+                 pandemic_regulations=ps.sh.austin_regulations,
+                 done_fn=done_fn)
+    # make_env = lambda: ps.env.PandemicGymEnv3Act.from_config(sim_config=sim_config, 
+    #     pandemic_regulations=ps.sh.austin_regulations,
+    #     done_fn=done_fn)
 
-    train_envs = SubprocVectorEnv(
-        [make_env for _ in range(args.training_num)]
-    )
+    # train_envs = SubprocVectorEnv(
+    #     [make_env for _ in range(args.training_num)]
+    # )
     # test_envs = SubprocVectorEnv(
     #     [make_env for _ in range(args.test_num)]
     # )
@@ -119,7 +125,8 @@ def train_dqn(args=get_args()):
     train_collector = Collector(
         policy,
         train_envs,
-        VectorReplayBuffer(args.buffer_size, len(train_envs)),
+        ReplayBuffer(args.buffer_size),
+        # VectorReplayBuffer(args.buffer_size, len(train_envs)),
         exploration_noise=True
     )
     # test_collector = Collector(policy, test_envs, exploration_noise=True)
@@ -127,19 +134,23 @@ def train_dqn(args=get_args()):
     # policy.set_eps(1)
     train_collector.collect(n_step=args.batch_size * args.training_num)
     # log
-    log_path = os.path.join(args.logdir, args.task, 'dqn')
+    date_time = datetime.datetime.now().strftime("%m-%d-%H-%M-%S")
+    log_path = os.path.join(args.logdir, args.task, f"dqn_{args.expt_name}_{date_time}")
     writer = SummaryWriter(log_path)
     logger = TensorboardLogger(writer, train_interval=args.log_interval)
 
     def save_best_fn(policy):
-        torch.save(policy.state_dict(), os.path.join(log_path, 'policy.pth'))
+        torch.save(policy.state_dict(), os.path.join(log_path, "policy.pth"))
 
     def stop_fn(mean_rewards):
+        '''
+        If desired, can specify a reward threshold to stop at with the following line:        
+        return mean_rewards >= reward_threshold
+        '''
         return False
-        # return mean_rewards >= env.spec.reward_threshold
 
     def train_fn(epoch, env_step):  # exp decay
-        eps = max(args.eps_train * (1 - 5e-6)**env_step, args.eps_test)
+        eps = max(args.eps_train_init * (1 - 5e-6)**env_step, args.eps_train_final)
         policy.set_eps(eps)
 
     def test_fn(epoch, env_step):
@@ -163,15 +174,14 @@ def train_dqn(args=get_args()):
         logger=logger
     )
 
-    assert stop_fn(result['best_reward'])
     return result
 
 
 if __name__ == '__main__':
     args = get_args()
     result = train_dqn(args)
-
-    # pprint.pprint(result)
+    print("Final result: ")
+    pprint.pprint(result)
     # # Let's watch its performance!
     # policy.eval()
     # policy.set_eps(args.eps_test)

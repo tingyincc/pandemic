@@ -33,15 +33,15 @@ def run_pandemic_gym_env() -> None:
         )
 
     # make env
-    # env = ps.env.PandemicGymEnv3Act.from_config(sim_config=sim_config, 
-    #     pandemic_regulations=ps.sh.austin_regulations,
-    #     done_fn=done_fn)
-    env = ps.env.PandemicGymEnv.from_config(sim_config = sim_config, 
+    env = ps.env.PandemicGymEnv3Act.from_config(sim_config=sim_config, 
         pandemic_regulations=ps.sh.austin_regulations,
         done_fn=done_fn)
+    # env = ps.env.PandemicGymEnv.from_config(sim_config = sim_config, 
+    #     pandemic_regulations=ps.sh.austin_regulations,
+    #     done_fn=done_fn)
 
     # run stage-0 action steps in the environment
-    env.reset()
+    init_obs = env.reset()
     Reward = 0
     print('''You will manually change the stage of response to the simulated pandemic. Wait till 75%''')
 
@@ -51,8 +51,27 @@ def run_pandemic_gym_env() -> None:
         #     action = input('Enter a Stage number from 0-4. 0 is no restrictions, 4 is most strict lockdown.\n')
         # else:
         action = 0
-        obs, reward, done, aux = env.step(action=int(action))  # here the action is the discrete regulation stage identifier
-        print("reward is ", reward, ", done is ", done)
+        obs, reward, done, aux = env.step(action=action)  # here the action is the discrete regulation stage identifier
+        print("OBS MIN ", obs.min())
+        print("OBS MAX ", obs.max())
+        # print("GLOBAL INFECTION SUMMARY ", obs.global_infection_summary)
+        # print("GLOBAL INFECTION SUMMARY MAX", obs.global_infection_summary.max())
+        # print("GLOBAL INFECTION SUMMARY MIN", obs.global_infection_summary.min())
+
+        # print("GLOBAL TESTING SUMMARY ", obs.global_testing_summary)
+        # print("GLOBAL TESTING SUMMARY MAX", obs.global_testing_summary.max())
+        # print("GLOBAL TESTING SUMMARY MIN", obs.global_testing_summary.min())
+
+        # print("STAGE ", obs.stage)
+        # print("STAGE SHAPE ", obs.stage.shape)
+
+        # print("INFECTION ABOVE THRESHOLD ", obs.infection_above_threshold)
+        # print("INFECTION ABOVE THRESHOLD SHAPE ", obs.infection_above_threshold.shape)
+
+        # print("TIME DAY ", obs.time_day)
+        # print("TIME DAY SHAPE", obs.time_day.shape)
+
+        print("reward ", reward, ", done is ", done)
         Reward += reward
 
     # generate plots
