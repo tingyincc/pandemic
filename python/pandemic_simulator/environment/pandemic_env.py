@@ -220,7 +220,6 @@ class PandemicGymEnv3Act(gym.ActionWrapper):
     def step(self, action):
         action = int(action)
         obs, reward, done, info = self.env.step(self.remap_action(action))
-        # obs, reward, done, info = self.env.step(action)
         flattened_obs = self.flatten_obs(obs)
         # also return done if we reach the maximal number of days
         self.current_days += 1
