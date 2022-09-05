@@ -158,9 +158,14 @@ python -m pip install -e .
 </ol>
 
 <h2 id="#t2">Tutorial 3</h2>
-1. switch to the tut3 branch. 
-2. pip install tianshou. 
-3. Do students need to install tensorboard? check this!
-4. Point out what changes have been made to the environment to enable running the RL scriptp. 
-5. Run the RL training script. Have students check that the model and logs have been saved in the correct directory.
-6. Teach students how to view tensorboard logs. There should be separate instructions for opening tensorboard locally versus on the server. 
+1. switch to the tut3 branch. Students may need to discard their changes from tut2, or stash it. Since some new features have been made to the pandemic simulator package, re-pip install the package.
+
+2. pip install tianshou. this library should download torch and tensorboard as dependencies. Have students check that tianshou, torch and tensorboard have all been installed via "pip show <package_name>.
+
+3. Point out that a new environment has added to enable running the RL script. Unlike the old environment, where the action space was {0, 1, 2, 3, 4} for the five stages, the action space for this environment is {-1, 0, 1} for "decrease stage", "keep stage same", and "increase stage". This modification is to follow the original paper's RL setup more closely. Further, we will pass a "done" function to this environment to determine when episodes should finish (unlike in the tutorials). 
+
+4. Run the baseline policies script, 12_eval_baseline_policies.py. The purpose of this script is to give students a way to interact with the new environment and provide some baselines so that they gain a better understanding of the task. This script evaluates 3 simple baseline policies with the new environment: the most lenient policy, which will keep the stage at Stage 0, the random policy, which randomly selects actions in the action space, and the strictest policy, which will increase the stage until Stage 4 and then keep it there. Have students screenshot the terminal output for this script.
+
+5. Run the RL training script, 13_train_dqn.py (this could take anywhere from ~6-12 hours depending on the student's machine configurations. Note that the bottleneck of this code is the simulator speed, which is CPU-bound, so using the GPU for learning can actually slow training down). After 1 hour of training, students should check that the model and logs are being been saved in the correct directory.
+
+6. Teach students how to view tensorboard logs. There should be separate instructions for opening tensorboard locally versus on the server. Screenshot the tensorboard logs.
