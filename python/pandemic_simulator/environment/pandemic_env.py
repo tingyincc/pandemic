@@ -4,7 +4,7 @@ from typing import List, Optional, Dict, Tuple, Mapping, Type, Sequence
 import gym
 import numpy as np
 
-from .done import DoneFunction
+from .done import DoneFunction, ORDone, DoneFunctionType, DoneFunctionFactory
 from .interfaces import LocationID, PandemicObservation, NonEssentialBusinessLocationState, PandemicRegulation, \
     InfectionSummary
 from .pandemic_sim import PandemicSim
@@ -174,10 +174,9 @@ class PandemicGymEnv3Act(gym.ActionWrapper):
     def __init__(self, env: PandemicGymEnv):
         super().__init__(env)
         self.env = env
+        self.max_days = 120
 
-        # self.action_space = gym.spaces.Discrete(3, start=-1)
         obs_upper_lim = 1000
-        days=1000
         # self.observation_space = gym.spaces.Dict(dict(
         #                               global_infection_summary=gym.spaces.MultiDiscrete(np.ones(shape=(1, 1, 5))*obs_upper_lim, dtype=np.float32),
         #                               global_testing_summary=gym.spaces.MultiDiscrete(np.ones(shape=(1, 1, 5))*obs_upper_lim, dtype=np.float32),
@@ -205,6 +204,7 @@ class PandemicGymEnv3Act(gym.ActionWrapper):
                     reward_fn: Optional[RewardFunction] = None,
                     done_fn: Optional[DoneFunction] = None,
                     ) -> 'PandemicGymEnv3Act':
+
         env = PandemicGymEnv.from_config(sim_config = sim_config,
         pandemic_regulations=pandemic_regulations,
         sim_opts = sim_opts,
@@ -224,6 +224,11 @@ class PandemicGymEnv3Act(gym.ActionWrapper):
                                           state.time_day
                                           # unlocked_non_essential_business_locations is always none so it is excluded
             ], axis=-1)
+
+        # also return done if we reach the maximal number of days
+        self.current_days += 1
+        done = done or (self.current_days >= self.max_days)
+
         return flattened_state, reward, done, info
 
     def action(self, action):
@@ -231,6 +236,7 @@ class PandemicGymEnv3Act(gym.ActionWrapper):
         return int(min(4, max(0, self.env._last_observation.stage[-1, 0, 0] + action)))
     
     def reset(self):
+        self.current_days = 0
         state = self.env.reset()
         flattened_state = np.concatenate([state.global_infection_summary,
                                           state.global_testing_summary,

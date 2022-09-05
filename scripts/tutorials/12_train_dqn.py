@@ -17,6 +17,9 @@ from tianshou.utils.net.common import Net
 
 # our imports
 import pandemic_simulator as ps
+from pandemic_simulator.environment.interfaces import InfectionSummary
+from pandemic_simulator.environment.done import ORDone, DoneFunctionFactory, DoneFunctionType 
+
 sim_config = ps.sh.small_town_config
 
 
@@ -27,16 +30,16 @@ def get_args():
     parser.add_argument('--seed', type=int, default=0)
     parser.add_argument('--eps-test', type=float, default=0.00)
     parser.add_argument('--eps-train', type=float, default=0.2)
-    parser.add_argument('--buffer-size', type=int, default=100000)
+    parser.add_argument('--buffer-size', type=int, default=1000)
     parser.add_argument('--lr', type=float, default=0.013)
     parser.add_argument('--gamma', type=float, default=0.99)
     parser.add_argument('--n-step', type=int, default=4)
     parser.add_argument('--target-update-freq', type=int, default=500)
-    parser.add_argument('--epoch', type=int, default=5)
-    parser.add_argument('--step-per-epoch', type=int, default=2000)
-    parser.add_argument('--step-per-collect', type=int, default=16)
+    parser.add_argument('--n-epoch', type=int, default=5)
+    parser.add_argument('--step-per-epoch', type=int, default=3000)
+    parser.add_argument('--step-per-collect', type=int, default=360)
     parser.add_argument('--update-per-step', type=float, default=0.0625)
-    parser.add_argument('--batch-size', type=int, default=128)
+    parser.add_argument('--batch-size', type=int, default=32)
     parser.add_argument('--hidden-sizes', type=int, nargs='*', default=[128, 128])
     parser.add_argument(
         '--dueling-q-hidden-sizes', type=int, nargs='*', default=[128, 128]
@@ -47,6 +50,7 @@ def get_args():
     parser.add_argument('--training-num', type=int, default=1)
     parser.add_argument('--test-num', type=int, default=1)
     parser.add_argument('--logdir', type=str, default='log')
+    parser.add_argument('--log_interval', type=int, default=500, help="timesteps between logging")
     parser.add_argument('--render', type=float, default=0.)
     parser.add_argument(
         '--device', type=str, default='cuda' if torch.cuda.is_available() else 'cpu'
@@ -60,13 +64,27 @@ def train_dqn(args=get_args()):
         # pandemic_regulations=ps.sh.austin_regulations)
 
     args.state_shape = (1, 1, 13) # env.observation_space.shape or env.observation_space.n
-    args.action_shape = 3 # env.action_space.shape or env.action_space.n
+    args.action_shape = 5 # env.action_space.shape or env.action_space.n
     # del env   
 
     # train_envs = gym.make(args.task)
     # you can also use tianshou.env.SubprocVectorEnv
+    done_threshold = sim_config.max_hospital_capacity * 3
+    done_fn = ORDone(
+            done_fns=[
+                DoneFunctionFactory.default(
+                    DoneFunctionType.INFECTION_SUMMARY_ABOVE_THRESHOLD,
+                    summary_type=InfectionSummary.CRITICAL,
+                    threshold=done_threshold,
+                ),
+                DoneFunctionFactory.default(DoneFunctionType.NO_PANDEMIC, num_days=40),
+                # InfectionSummaryAboveThresholdDone, 
+            ]
+        )
+
     make_env = lambda: ps.env.PandemicGymEnv3Act.from_config(sim_config=sim_config, 
-        pandemic_regulations=ps.sh.austin_regulations)
+        pandemic_regulations=ps.sh.austin_regulations,
+        done_fn=done_fn)
 
     train_envs = SubprocVectorEnv(
         [make_env for _ in range(args.training_num)]
@@ -111,7 +129,7 @@ def train_dqn(args=get_args()):
     # log
     log_path = os.path.join(args.logdir, args.task, 'dqn')
     writer = SummaryWriter(log_path)
-    logger = TensorboardLogger(writer)
+    logger = TensorboardLogger(writer, train_interval=args.log_interval)
 
     def save_best_fn(policy):
         torch.save(policy.state_dict(), os.path.join(log_path, 'policy.pth'))
@@ -129,14 +147,14 @@ def train_dqn(args=get_args()):
 
     # trainer
     result = offpolicy_trainer(
-        policy,
-        train_collector,
-        test_collector,
-        args.epoch,
-        args.step_per_epoch,
-        args.step_per_collect,
-        args.test_num,
-        args.batch_size,
+        policy=policy,
+        train_collector=train_collector,
+        test_collector=test_collector,
+        max_epoch=args.n_epoch,
+        step_per_epoch=args.step_per_epoch,
+        step_per_collect=args.step_per_collect,
+        episode_per_test=args.test_num,
+        batch_size=args.batch_size,
         update_per_step=args.update_per_step,
         stop_fn=stop_fn,
         train_fn=train_fn,
