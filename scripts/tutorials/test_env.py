@@ -50,6 +50,7 @@ def run_pandemic_gym_env() -> None:
         # if i>15:
         #     action = input('Enter a Stage number from 0-4. 0 is no restrictions, 4 is most strict lockdown.\n')
         # else:
+        # action = random.randint(-1, 1)
         action = 0
         obs, reward, done, aux = env.step(action=action)  # here the action is the discrete regulation stage identifier
         print("OBS MIN ", obs.min())

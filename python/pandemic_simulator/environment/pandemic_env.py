@@ -93,17 +93,15 @@ class PandemicGymEnv(gym.Env):
                 RewardFunctionFactory.default(RewardFunctionType.INFECTION_SUMMARY_ABOVE_THRESHOLD,
                                               summary_type=InfectionSummary.CRITICAL,
                                               threshold=sim_config.max_hospital_capacity),
-                # RewardFunctionFactory.default(RewardFunctionType.INFECTION_SUMMARY_ABOVE_THRESHOLD,
-                                              # summary_type=InfectionSummary.CRITICAL,
-                                              # threshold=3 * sim_config.max_hospital_capacity),
+                RewardFunctionFactory.default(RewardFunctionType.INFECTION_SUMMARY_ABOVE_THRESHOLD,
+                                              summary_type=InfectionSummary.CRITICAL,
+                                              threshold=3 * sim_config.max_hospital_capacity),
                 RewardFunctionFactory.default(RewardFunctionType.LOWER_STAGE,
                                               num_stages=len(pandemic_regulations)),
                 RewardFunctionFactory.default(RewardFunctionType.SMOOTH_STAGE_CHANGES,
                                               num_stages=len(pandemic_regulations))
             ],
-            weights=[.4, 
-            # 1,
-            .1, 0.02]
+            weights=[.4, 1, .1, 0.02]
         )
 
         return PandemicGymEnv(pandemic_sim=sim,
@@ -180,24 +178,6 @@ class PandemicGymEnv3Act(gym.ActionWrapper):
         super().__init__(env)
         self.env = env
         self.max_days = 120
-
-        # self.observation_space = gym.spaces.Dict(dict(
-        #                               global_infection_summary=gym.spaces.MultiDiscrete(np.ones(shape=(1, 1, 5))*obs_upper_lim, dtype=np.float32),
-        #                               global_testing_summary=gym.spaces.MultiDiscrete(np.ones(shape=(1, 1, 5))*obs_upper_lim, dtype=np.float32),
-        #                               stage=gym.spaces.MultiDiscrete(np.ones(shape=(1, 1, 1))*4, dtype=np.float32),
-        #                               infection_above_threshold=gym.spaces.MultiDiscrete(np.ones(shape=(1, 1, 1)), dtype=np.float32),
-        #                               time_day=gym.spaces.MultiDiscrete(np.ones(shape=(1, 1, 1))*days, dtype=np.float32),
-        #                               # unlocked_non_essential_business_locations=None, # what to do about this? is the list variable length?
-        #                               ))
-        '''
-        Observation space components: 
-        global_infection_summary: (1, 1, 5)
-        global_testing_summary: (1, 1, 5)
-        stage: (1, 1, 1)
-        infection_above_threshold: (1, 1, 1)
-        time_day: (1, 1, 1)
-        unlocked_non_essential_business_locations - this is removed because it is unused
-        '''
         self.obs_norm_bds = {
             "global_infection_summary": [0, 1000], # obs min, obs max
             "global_testing_summary": [0, 1000],
@@ -205,9 +185,10 @@ class PandemicGymEnv3Act(gym.ActionWrapper):
             "infection_above_threshold": [0, 1],
             "time_day": [0, self.max_days],
         }
-        obs_upper_lim = 1 # 1000
-        self.observation_space = gym.spaces.MultiDiscrete(np.ones(shape=(1, 1, 5+5+1+1+1))*obs_upper_lim, 
+        self.observation_space = gym.spaces.MultiDiscrete(np.ones(shape=(1, 1, 5+5+1+1+1)), 
                                                           dtype=np.float32)
+        # note that the action space for the learner is {-1, 0, 1}; different than the action space of the PandemicGymEnv
+        self.action_space = gym.spaces.Discrete(3, start=-1)
 
     @classmethod
     def from_config(self,
@@ -238,8 +219,8 @@ class PandemicGymEnv3Act(gym.ActionWrapper):
 
     def step(self, action):
         action = int(action)
-        # obs, reward, done, info = self.env.step(self.action(action))
-        obs, reward, done, info = self.env.step(action)
+        obs, reward, done, info = self.env.step(self.remap_action(action))
+        # obs, reward, done, info = self.env.step(action)
         flattened_obs = self.flatten_obs(obs)
         # also return done if we reach the maximal number of days
         self.current_days += 1
@@ -247,9 +228,12 @@ class PandemicGymEnv3Act(gym.ActionWrapper):
 
         return flattened_obs, reward, done, info
 
-    def action(self, action):
+    def remap_action(self, action):
+        '''Remap action back to stages
+        '''
         assert self.action_space.contains(action), "%r (%s) invalid" % (action, type(action))
-        return int(min(4, max(0, self.env._last_observation.stage[-1, 0, 0] + action)))
+        remapped_action = int(min(4, max(0, self.env._last_observation.stage[-1, 0, 0] + action)))
+        return remapped_action
     
     def reset(self):
         self.current_days = 0
