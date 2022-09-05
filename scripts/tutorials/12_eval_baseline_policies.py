@@ -1,6 +1,7 @@
 # Confidential, Copyright 2020, Sony Corporation of America, All rights reserved.
 import random
 from tqdm import trange
+import numpy as np
 
 import pandemic_simulator as ps
 from pandemic_simulator.environment.interfaces import InfectionSummary
@@ -11,7 +12,7 @@ def init_pandemic_env():
     # init globals
     ps.init_globals(seed=2)
     sim_config = ps.sh.small_town_config
-    done_threshold = sim_config.max_hospital_capacity # 
+    done_threshold = sim_config.max_hospital_capacity
     done_fn = ORDone(
             done_fns=[
                 DoneFunctionFactory.default(

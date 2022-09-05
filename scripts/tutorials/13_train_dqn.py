@@ -31,19 +31,19 @@ def get_args():
         default='cuda' if torch.cuda.is_available() else 'cpu')
     # logging
     parser.add_argument('--logdir', type=str, default='log')
-    parser.add_argument('--log_interval', type=int, default=500, help="timesteps between logging returns")
     parser.add_argument('--expt_name', type=str, default="", help="optional additional name for logs")
+    parser.add_argument('--log_interval', type=int, default=500, help="timesteps between logging returns")
     # dqn hyperparameters
-    parser.add_argument('--eps_test', type=float, default=0.0)
     parser.add_argument('--eps_train_init', type=float, default=0.2)
     parser.add_argument('--eps_train_final', type=float, default=0.01)
+    parser.add_argument('--eps_test', type=float, default=0.0)
     parser.add_argument('--buffer_size', type=int, default=10000)
     parser.add_argument('--lr', type=float, default=0.013)
     parser.add_argument('--gamma', type=float, default=0.99)
     parser.add_argument('--n_step', type=int, default=4, )
     parser.add_argument('--target_update_freq', type=int, default=50, 
         help="update target network every <target_update_freq> updates")
-    parser.add_argument('--n_epoch', type=int, default=100)
+    parser.add_argument('--n_epoch', type=int, default=8)
     parser.add_argument('--init_random_steps', type=int, default=600)
     parser.add_argument('--step_per_epoch', type=int, default=3000)
     parser.add_argument('--step_per_collect', type=int, default=360)
@@ -140,7 +140,7 @@ def train_dqn(args=get_args()):
         policy.set_eps(args.eps_test)
 
     # prefill buffer with some random data
-    policy.set_eps(1)
+    policy.set_eps(1.0)
     train_collector.collect(n_step=args.init_random_steps)
 
     # main training loop
