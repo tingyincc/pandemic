@@ -5,6 +5,7 @@ import argparse
 import os
 import pprint
 import datetime
+import time
 
 import numpy as np
 import torch
@@ -32,9 +33,9 @@ def get_args():
     # logging
     parser.add_argument('--logdir', type=str, default='log')
     parser.add_argument('--expt_name', type=str, default="", help="optional additional name for logs")
-    parser.add_argument('--log_interval', type=int, default=500, help="timesteps between logging returns")
+    parser.add_argument('--log_interval', type=int, default=360, help="timesteps between logging returns")
     # dqn hyperparameters
-    parser.add_argument('--eps_train_init', type=float, default=0.2)
+    parser.add_argument('--eps_train_init', type=float, default=0.5)
     parser.add_argument('--eps_train_final', type=float, default=0.01)
     parser.add_argument('--eps_test', type=float, default=0.0)
     parser.add_argument('--buffer_size', type=int, default=10000)
@@ -57,6 +58,26 @@ def get_args():
         default=[64, 64])
     return parser.parse_args()
 
+def make_agent(args):
+    # specify network structure
+    Q_param = {"hidden_sizes": args.dueling_q_hidden_sizes}
+    V_param = {"hidden_sizes": args.dueling_v_hidden_sizes}
+    net = Net(
+        args.state_shape,
+        args.action_shape,
+        hidden_sizes=args.hidden_sizes,
+        device=args.device,
+        dueling_param=(Q_param, V_param)
+    ).to(args.device)
+    optim = torch.optim.Adam(net.parameters(), lr=args.lr)
+    policy = DQNPolicy(
+        net,
+        optim,
+        args.gamma,
+        args.n_step,
+        target_update_freq=args.target_update_freq
+    )
+    return policy, optim
 
 def train_dqn(args=get_args()):
     # init env
@@ -85,25 +106,7 @@ def train_dqn(args=get_args()):
     torch.manual_seed(args.seed)
     env.seed(args.seed)
 
-    # specify network structure
-    Q_param = {"hidden_sizes": args.dueling_q_hidden_sizes}
-    V_param = {"hidden_sizes": args.dueling_v_hidden_sizes}
-    net = Net(
-        args.state_shape,
-        args.action_shape,
-        hidden_sizes=args.hidden_sizes,
-        device=args.device,
-        dueling_param=(Q_param, V_param)
-    ).to(args.device)
-    optim = torch.optim.Adam(net.parameters(), lr=args.lr)
-    policy = DQNPolicy(
-        net,
-        optim,
-        args.gamma,
-        args.n_step,
-        target_update_freq=args.target_update_freq
-    )
-
+    policy, optim = make_agent(args)
     # initialize collector
     train_collector = Collector(
         policy,
@@ -133,7 +136,7 @@ def train_dqn(args=get_args()):
         return False
 
     def train_fn(epoch, env_step):  # exp decay
-        eps = max(args.eps_train_init * (1 - 5e-6)**env_step, args.eps_train_final)
+        eps = max(args.eps_train_init * (1 - 1.5e-4)**env_step, args.eps_train_final)
         policy.set_eps(eps)
 
     def test_fn(epoch, env_step):
@@ -151,7 +154,7 @@ def train_dqn(args=get_args()):
         max_epoch=args.n_epoch,
         step_per_epoch=args.step_per_epoch,
         step_per_collect=args.step_per_collect,
-        episode_per_test=args.test_num,
+        episode_per_test=1, # no test env
         batch_size=args.batch_size,
         update_per_step=args.update_per_step,
         stop_fn=stop_fn,
@@ -166,6 +169,11 @@ def train_dqn(args=get_args()):
 
 if __name__ == '__main__':
     args = get_args()
+
+    start = time.time()
     result = train_dqn(args)
     print("Final result: ")
     pprint.pprint(result)
+
+    elapsed = time.time() - start
+    print("Train time: ", str(datetime.timedelta(seconds=elapsed)))

@@ -10,9 +10,9 @@ from pandemic_simulator.environment.done import ORDone, DoneFunctionFactory, Don
 
 def init_pandemic_env():
     # init globals
-    ps.init_globals(seed=2)
+    ps.init_globals(seed=112358)
     sim_config = ps.sh.small_town_config
-    done_threshold = sim_config.max_hospital_capacity
+    done_threshold = sim_config.max_hospital_capacity * 3
     done_fn = ORDone(
             done_fns=[
                 DoneFunctionFactory.default(
@@ -31,30 +31,36 @@ def init_pandemic_env():
 
 def eval_policy(policy, env, n_episodes=5):
     rets = []
+    ep_lens = []
     for i in trange(n_episodes, desc='Simulating episode'):
         cumu_reward = 0
         obs = env.reset()
         done = False
+        ep_len = 0
         while not done:
             action = policy(obs)
             obs, reward, done, aux = env.step(action=action)
             cumu_reward += reward
+            ep_len += 1
+
         rets.append(cumu_reward)
-    return np.mean(rets), np.std(rets)
+        ep_lens.append(ep_len)
+    return np.mean(rets), np.std(rets), rets, ep_lens
 
 
 if __name__ == '__main__':
     n_eval_episodes = 5
     env = init_pandemic_env()
 
-    policy = lambda obs: 0
-    mean_rets, std_rets = eval_policy(policy, env, n_eval_episodes)
-    print(f"MEAN/STD RETURN OF MOST LENIENT POLICY: {mean_rets}, {std_rets}")
+    policy = lambda obs: -1
+    mean_rets, std_rets, rets, ep_lens = eval_policy(policy, env, n_eval_episodes)
+    print(f"MEAN/STD RETURN OF MOST LENIENT POLICY: {mean_rets}, {std_rets}\n")
 
     policy = lambda obs: random.randint(-1, 1)
-    mean_rets, std_rets = eval_policy(policy, env, n_eval_episodes)
-    print(f"MEAN/STD RETURN OF RANDOM POLICY: {mean_rets}, {std_rets}")
+    mean_rets, std_rets, rets, ep_lens = eval_policy(policy, env, n_eval_episodes)
+    print(f"MEAN/STD RETURN OF RANDOM POLICY: {mean_rets}, {std_rets}\n")
     
     policy = lambda obs: 1
-    mean_rets, std_rets = eval_policy(policy, env, n_eval_episodes)
-    print(f"MEAN/STD RETURN OF MOST STRINGENT POLICY: {mean_rets}, {std_rets}")
+    mean_rets, std_rets, rets, ep_lens = eval_policy(policy, env, n_eval_episodes)
+    print(f"MEAN/STD RETURN OF MOST STRICT POLICY: {mean_rets}, {std_rets}\n")
+
