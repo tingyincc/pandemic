@@ -6,6 +6,7 @@
 <li><a href="#setup">Setup</a><br>
 <li><a href="#t1">Tutorial 1</a>
 <li><a href="#t2">Tutorial 2</a>
+<li><a href="#t3">Tutorial 3</a>
 </ul>
 
 <h2 id="#setup">Setup</h2>
@@ -157,10 +158,30 @@ python -m pip install -e .
 ```
 </ol>
 
-<h2 id="#t2">Tutorial 3</h2>
-1. switch to the tut3 branch. Students may need to discard their changes from tut2, or stash it. Since some new features have been made to the pandemic simulator package, re-pip install the package.
+<h2 id="#t3">Tutorial 3</h2>
 
-2. pip install tianshou. this library should download torch and tensorboard as dependencies. Have students check that tianshou, torch and tensorboard have all been installed via "pip show <package_name>.
+In this tutorial, we will walk you through a basic example on how to use deep reinforcement learning to learn a policy for the Pandemic Simulator problem. The More specifview logs/
+Before starting the tutorial, be sure to activate your conda environment!
+
+1. Switch to the `tut3` branch using the below command. You may need to discard your changes from `tut2`, or `git stash` them.
+
+```shell
+git fetch --all
+git checkout tut3
+```
+    - dkd
+    
+    - dkd
+    
+2. Since some new features have been added to the code inside the `python/pandemic_simulator` directory, re-install install the package from the top level of the PandemicSimulatorTutorial repository via the following command:
+```shell
+python3 -m pip install -e .
+```
+
+3. Next,  library should download torch and tensorboard as dependencies. Have students check that tianshou, torch and tensorboard have all been installed via "pip show <package_name>.
+```shell
+pip install tianshou
+```
 
 3. Point out that a new environment has added to enable running the RL script. Unlike the old environment, where the action space was {0, 1, 2, 3, 4} for the five stages, the action space for this environment is {-1, 0, 1} for "decrease stage", "keep stage same", and "increase stage". This modification is to follow the original paper's RL setup more closely. Further, we will pass a "done" function to this environment to determine when episodes should finish (unlike in the tutorials). 
 
