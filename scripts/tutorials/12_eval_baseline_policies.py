@@ -54,13 +54,13 @@ if __name__ == '__main__':
 
     policy = lambda obs: -1 # always decrease the stage
     mean_rets, std_rets, rets, ep_lens = eval_policy(policy, env, n_eval_episodes)
-    print(f"MEAN/STD RETURN OF MOST LENIENT POLICY: {mean_rets}, {std_rets}\n")
+    print(f"MEAN/STD RETURN OF POLICY: {mean_rets}, {std_rets}\n")
 
     policy = lambda obs: random.randint(-1, 1) # randomly choose actions
     mean_rets, std_rets, rets, ep_lens = eval_policy(policy, env, n_eval_episodes)
-    print(f"MEAN/STD RETURN OF RANDOM POLICY: {mean_rets}, {std_rets}\n")
+    print(f"MEAN/STD RETURN OF POLICY: {mean_rets}, {std_rets}\n")
     
     policy = lambda obs: 1 # always increase the stage
     mean_rets, std_rets, rets, ep_lens = eval_policy(policy, env, n_eval_episodes)
-    print(f"MEAN/STD RETURN OF MOST STRICT POLICY: {mean_rets}, {std_rets}\n")
+    print(f"MEAN/STD RETURN OF POLICY: {mean_rets}, {std_rets}\n")
 
