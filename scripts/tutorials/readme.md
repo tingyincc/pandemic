@@ -6,6 +6,7 @@
 <li><a href="#setup">Setup</a><br>
 <li><a href="#t1">Tutorial 1</a>
 <li><a href="#t2">Tutorial 2</a>
+<li><a href="#t3">Tutorial 3</a>
 </ul>
 
 <h2 id="#setup">Setup</h2>
@@ -157,15 +158,69 @@ python -m pip install -e .
 ```
 </ol>
 
-<h2 id="#t2">Tutorial 3</h2>
-1. switch to the tut3 branch. Students may need to discard their changes from tut2, or stash it. Since some new features have been made to the pandemic simulator package, re-pip install the package.
+<h2 id="#t3">Tutorial 3</h2>
 
-2. pip install tianshou. this library should download torch and tensorboard as dependencies. Have students check that tianshou, torch and tensorboard have all been installed via "pip show <package_name>.
 
-3. Point out that a new environment has added to enable running the RL script. Unlike the old environment, where the action space was {0, 1, 2, 3, 4} for the five stages, the action space for this environment is {-1, 0, 1} for "decrease stage", "keep stage same", and "increase stage". This modification is to follow the original paper's RL setup more closely. Further, we will pass a "done" function to this environment to determine when episodes should finish (unlike in the tutorials). 
+In this tutorial, we will walk you through a basic example on how to use deep reinforcement learning to learn a policy for the Pandemic Simulator problem. More specifically, you will install some tools for deep reinforcement learning (RL), run some baseline policies, train a policy via the DQN algorithm, and learn to view Tensorboard logs. 
 
-4. Run the baseline policies script, 12_eval_baseline_policies.py. The purpose of this script is to give students a way to interact with the new environment and provide some baselines so that they gain a better understanding of the task. This script evaluates 3 simple baseline policies with the new environment: the most lenient policy, which will keep the stage at Stage 0, the random policy, which randomly selects actions in the action space, and the strictest policy, which will increase the stage until Stage 4 and then keep it there. Have students screenshot the terminal output for this script.
+Please start this tutorial at least 1 day in advance of the deadline, as training the deep RL policy will take around 8-12 hours depending on your machine.
 
-5. Run the RL training script, 13_train_dqn.py (this could take anywhere from ~6-12 hours depending on the student's machine configurations. Note that the bottleneck of this code is the simulator speed, which is CPU-bound, so using the GPU for learning can actually slow training down). After 1 hour of training, students should check that the model and logs are being been saved in the correct directory.
+ 1. Setup steps: 
+    - Be sure to activate your conda environment!
+    - Switch to the `tut3` branch using the below command. You may need to discard your changes from `tut2`, or `git stash` them.
+	```
+	git fetch --all
+	git checkout tut3
+	```
+    - Since some new features have been added to the code inside the `python/pandemic_simulator` directory, re-install install the package from the top level of the PandemicSimulatorTutorial repository via the following command:
+	```shell
+	python3 -m pip install -e .
+	```
+    - Next, install the package `tianshou`. [Tianshou](https://github.com/thu-ml/tianshou) is a package that provides modular implementations of various well-known deep RL algorithms in PyTorch.  The basic architecture of the Tianshou codebase is described [here](https://tianshou.readthedocs.io/en/latest/tutorials/concepts.html).  
+    ```shell
+    pip install tianshou
+    ```   
+    - Installing Tianshou should also automatically install PyTorch and Tensorboard as dependencies. Check that this is the case by running the following commands. If this is not the case, please install these packages on your own.
+    ```shell
+    pip show torch
+    pip show tensorboard
+    ```
+    - **Note regarding CPU vs GPU versions of PyTorch: the bottleneck of learning on the PandemicSim is the simulator speed, which relies on the CPU, so using the GPU for learning may not speed things up.
+2. In Tutorials 1 and 2, you interacted with the `PandemicGymEnv`, which is defined in the file, `python/pandemic_simulator/environment/pandemic_env.py`. To allow the deep RL algorithms work with the PandemicSimulator, we have provided the `PandemicGymEnv3Act`, which wraps the original `PandemicGymEnv`. Please open this file and observe the modifications described. The important differences (and non-differences!) between the two environments are listed below using the vocabulary of RL:
+    - *Observation space*: 
+	    - The original environment used the `PandemicObservation` data class to wrap the observation. The new environment flattens the information contained within this data clas into a vector.
+	    -  The new environment defines an `observation_space` attribute, to specify the size of the observation vector. 
+	    - The new environment also removes two types of data from the observation to reduce the state space of the problem. First, `global_testing_summary` has been removed because we already include the true infection state in the observation as `global_infection_summary`, and `global_testing_summary` is a noisy version of the true infection state. This is to create an easier learning problem for tutorial purposes. Note that the original PandemicSim paper gave the policy network the `global_testing_summary` , and only gave the `global_infection_summary` as input to the critic network --- a more realistic approach. Second,  `unlocked_non_essential_business_locations` has been removed, because it was an unused variable. 
+	    - Finally, observation data is now normalized to lie between 0 and 1. 
+    - *Action space*: in the original environment, the actions that a policy could take were the stage numbers, from 0 to 4. For consistency with the way learning was implemented in the original PandemicSim paper, in the new environment, the actions are now {-1, 0, 1}. The action of -1 means "decrease the stage", 0 means "keep the stage the same", and 1 means "increase the stage". This is a *design choice* that you may wish to experiment with in your final projects.
+    - *Transition function*: No change
+    - *Reward function*: No change
+    - *Done function*: in both the original and new environments, a done function (`done_fn`) must be passed to the environment upon initialization, to determine when each episode terminates. In the new environment, the episode will terminate after 120 steps (days), although it may terminate earlier due to the done function.
+    
+3. Tutorial script `12_eval_baseline_policies.py` evaluates some simple baseline policies on the new environment to give you some more intuition about the PandemicSim. It also shows how to initialize the environment with reward and done functions---which has not been shown in previous tutorials. 
+    - Open tutorial script `12_eval_baseline_policies.py` and read the descriptions of the baseline policies under the `if __name__=='__main__':` statement. Which policy would you expect to do the best? The worst?
+    - Run tutorial script 12 via the below command. **Please screenshot the terminal output and include in your submission.**
+	 ```shell
+	 python 12_eval_baseline_policies.py
+	 ```
+	 
+4. In tutorial script `13_train_dqn.py`, we will learn a policy via the deep reinforcement learning algorithm, DQN. DQN is one of the first examples of a successful deep reinforcement learning algorithm. [OPTIONAL] Skim the original [paper](https://www.cs.toronto.edu/~vmnih/docs/dqn.pdf).
+    - Please open the tutorial script, and observe the code structure. In general, most modifiable parameters have been placed in the `get_args()` function.
+    - Run the RL training script, `13_train_dqn.py` (this could take anywhere from ~8-12 hours depending on your machine configurations). 
+    - After an hour or two of training, you should confirm that logging files are being saved in the newly generated `log` folder. When you observe Tensorboard events files, you may proceed to the last step. 
 
-6. Teach students how to view tensorboard logs. There should be separate instructions for opening tensorboard locally versus on the server. Screenshot the tensorboard logs.
+5. In this step, you will learn how to use Tensorboard to view the log files. 
+    - Enter the directory, `scripts/tutorials/log` in the terminal.
+    - Run the following command: 
+    ```shell
+    tensorboard --logdir . --port=6007
+    ```
+    - Open your favorite browser, and go to the link, `localhost:6007` (do not prefix this link with anything such as `www`, `https://`, etc.). 
+    - You should see a orange dashboard with auto-generated graphs of the policy's learning curves. the learning losses, etc, similar to the image in the tutorial [here](https://pytorch.org/tutorials/recipes/recipes/tensorboard_with_pytorch.html). If you do not see line graphs, make sure to select `Scalars`  at the top of the dashboard. **Once training has completed, please screenshot this dashboard for your submission.** 
+    
+[Disclaimer] The original PandemicSim paper used the SAC algorithm---a state-of-the-art deep RL algorithm--- to learn a policy, while here, we use DQN, a classic algorithm that is relatively simpler to understand. The learning script provided in this tutorial does not represent the best possible learning setup, and many optimizations could be made to improve the learning results. 
+
+For example, one trick used by the authors of the PandemicSim paper is the following: at the beginning of each episode, the simulator is allowed to run until the number of infections hit a value of 5. This is called a "warmup phase" in the original paper. The data collected during this warmup phase is ignored by the learning process, by not placing this data into the experience replay buffer. Afterwards, they set the initial stage to 4 (lockdown), and allow the RL policy decide the stage thereafter until the episode is done.
+
+You may wish to try out some tricks of your own, or even different learning algorithms, for your final project. 
+
