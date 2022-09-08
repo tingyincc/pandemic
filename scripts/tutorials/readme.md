@@ -160,30 +160,38 @@ python -m pip install -e .
 
 <h2 id="#t3">Tutorial 3</h2>
 
-In this tutorial, we will walk you through a basic example on how to use deep reinforcement learning to learn a policy for the Pandemic Simulator problem. The More specifview logs/
-Before starting the tutorial, be sure to activate your conda environment!
 
-1. Switch to the `tut3` branch using the below command. You may need to discard your changes from `tut2`, or `git stash` them.
+In this tutorial, we will walk you through a basic example on how to use deep reinforcement learning to learn a policy for the Pandemic Simulator problem. More specifically, you will install some tools for deep reinforcement learning (RL), run some baseline policies, train a policy via the DQN algorithm, and learn to view Tensorboard logs. 
 
-```shell
-git fetch --all
-git checkout tut3
-```
-    - dkd
+Please start this tutorial at least 1 day in advance of the deadline, as training the deep RL policy will take around 8-12 hours depending on your machine.
+
+ 1. Setup steps: 
+    - Be sure to activate your conda environment!
+    - Switch to the `tut3` branch using the below command. You may need to discard your changes from `tut2`, or `git stash` them.
+	```
+	git fetch --all
+	git checkout tut3
+	```
+    - Since some new features have been added to the code inside the `python/pandemic_simulator` directory, re-install install the package from the top level of the PandemicSimulatorTutorial repository via the following command:
+	```shell
+	python3 -m pip install -e .
+	```
+    - Next, install the package `tianshou`. [Tianshou](https://github.com/thu-ml/tianshou) is a package that provides modular implementations of various well-known deep RL algorithms in PyTorch.  The basic architecture of the Tianshou codebase is described [here](https://tianshou.readthedocs.io/en/latest/tutorials/concepts.html).  
+    ```shell
+    pip install tianshou
+    ```   
+    - Installing Tianshou should also automatically install PyTorch and Tensorboard as dependencies. Check that this is the case by running the following commands. If this is not the case, please install these packages on your own.
+    ```shell
+    pip show torch
+    pip show tensorboard
+    ```
+2. In Tutorials 1 and 2, you interacted with the `PandemicGymEnv`, which is defined in the file, `python/pandemic_simulator/environment/pandemic_env.py`. To allow the deep RL algorithms work with the PandemicSimulator, we have provided the `PandemicGymEnv3Act`, which wraps the original `PandemicGymEnv`. The important differences (and non-differences!) between the two environments are listed below using the vocabulary of RL:
+    - *Observation space*: the original environment used the `PandemicObservation` data class to wrap the observation. The new environment flattens the information contained within this data clas into a vector, and defines an `observation_space` attribute. Furthermore, observation data is now normalized to lie between 0 and 1. 
+    - *Action space*: in the original environment, the actions that a policy could take were the stage numbers, from 0 to 4. For consistency with the way learning was implemented in the original PandemicSim paper, in the new environment, the actions are now {-1, 0, 1}. The action of -1 means "decrease the stage", 0 means "keep the stage the same", and 1 means "increase the stage". This is a *design choice* that you may wish to experiment with in your final projects.
+    - *Transition function*: No change
+    - *Reward*: No change
+    - *Done function*: in both the original and new environments, a done function (`done_fn`) must be passed to the environment upon initialization, to determine when each episode terminates. In the new environment, the episode will terminate after 120 steps (days), although it may terminate earlier due to the done function.
     
-    - dkd
-    
-2. Since some new features have been added to the code inside the `python/pandemic_simulator` directory, re-install install the package from the top level of the PandemicSimulatorTutorial repository via the following command:
-```shell
-python3 -m pip install -e .
-```
-
-3. Next,  library should download torch and tensorboard as dependencies. Have students check that tianshou, torch and tensorboard have all been installed via "pip show <package_name>.
-```shell
-pip install tianshou
-```
-
-3. Point out that a new environment has added to enable running the RL script. Unlike the old environment, where the action space was {0, 1, 2, 3, 4} for the five stages, the action space for this environment is {-1, 0, 1} for "decrease stage", "keep stage same", and "increase stage". This modification is to follow the original paper's RL setup more closely. Further, we will pass a "done" function to this environment to determine when episodes should finish (unlike in the tutorials). 
 
 4. Run the baseline policies script, 12_eval_baseline_policies.py. The purpose of this script is to give students a way to interact with the new environment and provide some baselines so that they gain a better understanding of the task. This script evaluates 3 simple baseline policies with the new environment: the most lenient policy, which will keep the stage at Stage 0, the random policy, which randomly selects actions in the action space, and the strictest policy, which will increase the stage until Stage 4 and then keep it there. Have students screenshot the terminal output for this script.
 
