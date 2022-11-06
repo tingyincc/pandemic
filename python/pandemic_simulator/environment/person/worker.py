@@ -87,7 +87,7 @@ class Worker(BasePerson):
 
         if sim_time in self._work_time:
             # execute during work routines
-            ret = execute_routines(person=self, routines_with_status=self._during_work_rs)
+            ret = execute_routines(time = sim_time, person=self, routines_with_status=self._during_work_rs)
             if ret != NOOP:
                 return ret
 
@@ -96,7 +96,7 @@ class Worker(BasePerson):
                 return None
         else:
             # execute outside work time routines
-            ret = execute_routines(person=self, routines_with_status=self._outside_work_rs)
+            ret = execute_routines(time = sim_time, person=self, routines_with_status=self._outside_work_rs)
             if ret != NOOP:
                 return ret
 

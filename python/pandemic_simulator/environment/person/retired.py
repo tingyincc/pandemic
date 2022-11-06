@@ -54,7 +54,7 @@ class Retired(BasePerson):
             return step_ret
 
         # execute routines
-        ret = execute_routines(person=self, routines_with_status=self._routines_with_status)
+        ret = execute_routines(time = sim_time, person=self, routines_with_status=self._routines_with_status)
         if ret != NOOP:
             return ret
 

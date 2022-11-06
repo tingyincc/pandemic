@@ -136,7 +136,8 @@ class BasePerson(Person):
                 self.enter_location(self.home)
                 return None
 
-        comply_to_regulation = self._numpy_rng.uniform() < self._regulation_compliance_prob
+        #comply_to_regulation = self._numpy_rng.uniform() < self._regulation_compliance_prob
+        comply_to_regulation = self._numpy_rng.uniform() < (self._regulation_compliance_prob - 0.01 * sim_time.day)
         if (
                 not self._registry.get_person_quarantined_state(self._id) and comply_to_regulation and
 
@@ -194,11 +195,11 @@ class BasePerson(Person):
 
         return False
 
-    def get_social_gathering_location(self) -> Optional[LocationID]:
+    def get_social_gathering_location(self, sim_time) -> Optional[LocationID]:
         ags = self._state.avoid_gathering_size
         loc_ids = self._registry.location_ids_with_social_events
         num_events = len(loc_ids)
-        comply_to_regulation = (self._numpy_rng.uniform() < self._regulation_compliance_prob)
+        comply_to_regulation = (self._numpy_rng.uniform() < (self._regulation_compliance_prob * 0.95 ** sim_time.day))
 
         if comply_to_regulation and ags == 0:
             return None

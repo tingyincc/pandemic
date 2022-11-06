@@ -84,7 +84,7 @@ class Minor(BasePerson):
                 return None
         else:
             # execute outside school routines
-            ret = execute_routines(person=self, routines_with_status=self._outside_school_rs)
+            ret = execute_routines(time = sim_time, person=self, routines_with_status=self._outside_school_rs)
             if ret != NOOP:
                 return ret
 

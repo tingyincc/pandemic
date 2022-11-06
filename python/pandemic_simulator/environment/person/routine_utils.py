@@ -3,12 +3,12 @@ from typing import Sequence, Optional, cast, Type, Tuple
 
 from .base import BasePerson
 from ..interfaces import PersonRoutineWithStatus, NoOP, NOOP, LocationID, SpecialEndLoc, globals, PersonRoutine, \
-    SimTimeTuple, SimTimeRoutineTrigger, RoutineTrigger
+    SimTime, SimTimeTuple, SimTimeRoutineTrigger, RoutineTrigger
 
 __all__ = ['execute_routines', 'triggered_routine', 'weekend_routine', 'mid_day_during_week_routine', 'social_routine']
 
 
-def execute_routines(person: BasePerson, routines_with_status: Sequence[PersonRoutineWithStatus]) -> Optional[NoOP]:
+def execute_routines(time: SimTime, person: BasePerson, routines_with_status: Sequence[PersonRoutineWithStatus]) -> Optional[NoOP]:
     """
     Executes the given routines of the person in the simulator.
     Note that this function updates (mutates) status flags in the routines_with_status instances.
@@ -50,7 +50,7 @@ def execute_routines(person: BasePerson, routines_with_status: Sequence[PersonRo
             ):
                 # get the end location
                 if routine.end_loc == SpecialEndLoc.social:
-                    end_loc = person.get_social_gathering_location()
+                    end_loc = person.get_social_gathering_location(time)
                     if end_loc is None:
                         # no social gatherings to attend, skip routine
                         continue
