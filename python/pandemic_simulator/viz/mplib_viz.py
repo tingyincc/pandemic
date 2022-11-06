@@ -144,7 +144,7 @@ class BaseMatplotLibViz(PandemicViz):
                     textcoords='offset points', xycoords='axes fraction',
                     ha='center', va='center', size=14)
 
-    def plot(self, plots_to_show: Optional[Sequence[str]] = None, *args: Any, **kwargs: Any) -> None:
+    def plot(self, plots_to_show: Optional[Sequence[str]] = None,title:string = "test", *args: Any, **kwargs: Any) -> None:
         if plots_to_show:
             fn_names = [nm for nm in plots_to_show if ismethod(getattr(self, 'plot_' + nm))]
         else:
@@ -167,7 +167,7 @@ class BaseMatplotLibViz(PandemicViz):
             plot_fn(ax, **kwargs)
             self.annotate_plot(ax, plot_ref_labels[ax_i])
         plt.tight_layout()
-        plt.show()
+        plt.savefig(title+ "_plot.png")
 
 
 class SimViz(BaseMatplotLibViz):
