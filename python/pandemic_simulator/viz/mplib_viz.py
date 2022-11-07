@@ -8,6 +8,7 @@ from cycler import cycler
 from matplotlib import pyplot as plt
 from matplotlib.axes import Axes
 from matplotlib.ticker import MaxNLocator
+import pandas as pd
 
 from .evaluation_plots import inf_colors
 from .pandemic_viz import PandemicViz
@@ -105,6 +106,10 @@ class BaseMatplotLibViz(PandemicViz):
         ax.set_xlabel('time (days)')
         ax.set_ylabel('persons')
         ax.yaxis.set_major_locator(MaxNLocator(integer=True))
+
+        num_arr = np.array(self._gis).shape[0]
+        df = pd.DataFrame(np.array(self._gis).reshape(num_arr,5).tolist(), columns=["Critical","Dead","Infected","None","Recovered"])
+        df.to_csv("global_infection_summary.csv")
 
     def plot_gts(self, ax: Optional[Axes] = None, **kwargs: Any) -> None:
         ax = ax or plt.gca()
