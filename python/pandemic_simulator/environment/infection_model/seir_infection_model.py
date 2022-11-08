@@ -130,7 +130,7 @@ class SEIRModel(InfectionModel):
                  exposed_rate: Optional[float] = None,
                  pre_asymp_rate: float = 1. / 2.3,
                  pre_symp_rate: float = 1. / 2.3,
-                 recovery_rate_asymp: Optional[float] = 0.001,
+                 recovery_rate_asymp: Optional[float] = 0.01,
                  recovery_rate_symp_non_treated: Optional[float] = None,
                  recovery_rate_needs_hosp: float = 0.0214286,
                  recovery_rate_hosp: Optional[float] = None,
