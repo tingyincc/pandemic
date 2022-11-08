@@ -17,13 +17,13 @@ def run_pandemic_gym_env() -> None:
 
     # select a simulator config
     # sim_config = ps.sh.small_town_config
-    sim_config = ps.sh.town_config
+    sim_config = ps.sh.my_town_config
 
 
     # make env
 
     wrap = ps.env.PandemicGymEnv.from_config(sim_config = sim_config, pandemic_regulations=ps.sh.italian_regulations)
-    start_day = 20 # march_1
+    start_day = 29 # march_1
 
     # setup viz
     viz = ps.viz.GymViz.from_config(sim_config=sim_config)
@@ -53,9 +53,7 @@ def run_pandemic_gym_env() -> None:
             #     action = 4
 
             
-            if not obs.infection_above_threshold:
-                action = 0
-            elif obs.time_day [...,0]>=start_day and obs.time_day [...,0]< start_day+4:
+            if obs.time_day [...,0]>=start_day and obs.time_day [...,0]< start_day+4:
                 action = 1
             elif obs.time_day [...,0]>=start_day+4 and obs.time_day [...,0]<start_day+9:
                 action = 2
@@ -69,6 +67,14 @@ def run_pandemic_gym_env() -> None:
                 action = 2
 
             ########################################################################################################################################
+
+            # italian_strategy = [ps.data.StageSchedule(stage=0, end_day=3),
+            #             ps.data.StageSchedule(stage=1, end_day=8),
+            #             ps.data.StageSchedule(stage=2, end_day=13),
+            #             ps.data.StageSchedule(stage=3, end_day=25),
+            #             ps.data.StageSchedule(stage=4, end_day=59),
+            #             ps.data.StageSchedule(stage=3, end_day=79),
+            #             ps.data.StageSchedule(stage=2, end_day=None)]
 
         obs, reward, done, aux = wrap.step(action=int(action))  # here the action is the discrete regulation stage identifier
         print(obs)
