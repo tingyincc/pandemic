@@ -136,8 +136,13 @@ class BasePerson(Person):
                 self.enter_location(self.home)
                 return None
 
-        #comply_to_regulation = self._numpy_rng.uniform() < self._regulation_compliance_prob
-        comply_to_regulation = self._numpy_rng.uniform() < (self._regulation_compliance_prob * 0.95 ** sim_time.day)
+        # Original
+        # comply_to_regulation = self._numpy_rng.uniform() < self._regulation_compliance_prob
+        # Exponential
+        # comply_to_regulation = (self._numpy_rng.uniform() < (self._regulation_compliance_prob * 0.95 ** sim_time.day))
+        # Polynomial
+        comply_to_regulation = self._numpy_rng.uniform() < (self._regulation_compliance_prob - pow(0.0001*sim_time.day, 2))
+
         if (
                 not self._registry.get_person_quarantined_state(self._id) and comply_to_regulation and
 
@@ -199,8 +204,13 @@ class BasePerson(Person):
         ags = self._state.avoid_gathering_size
         loc_ids = self._registry.location_ids_with_social_events
         num_events = len(loc_ids)
-        #comply_to_regulation = self._numpy_rng.uniform() < self._regulation_compliance_prob
-        comply_to_regulation = (self._numpy_rng.uniform() < (self._regulation_compliance_prob * 0.95 ** sim_time.day))
+        # Original
+        # comply_to_regulation = self._numpy_rng.uniform() < self._regulation_compliance_prob
+        # Exponential
+        # comply_to_regulation = (self._numpy_rng.uniform() < (self._regulation_compliance_prob * 0.95 ** sim_time.day))
+        # Polynomial
+        comply_to_regulation = self._numpy_rng.uniform() < (self._regulation_compliance_prob - pow(0.0001*sim_time.day, 2))
+
 
         if comply_to_regulation and ags == 0:
             return None

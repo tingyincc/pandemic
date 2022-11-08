@@ -83,7 +83,7 @@ def run_pandemic_gym_env() -> None:
         sim_viz.record_state(state = wrap.pandemic_sim.state)
     # generate plots
     viz.plot()
-    sim_viz.plot()
+    sim_viz.plot("exp6-polynimial-comp")
     print('Reward:'+str(Reward))
 
 
