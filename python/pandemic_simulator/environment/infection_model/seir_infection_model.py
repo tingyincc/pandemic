@@ -133,7 +133,7 @@ class SEIRModel(InfectionModel):
                  recovery_rate_asymp: Optional[float] = None,
                  recovery_rate_symp_non_treated: Optional[float] = None,
                  recovery_rate_needs_hosp: float = 0.0214286,
-                 recovery_rate_hosp: Optional[float] = None,
+                 recovery_rate_hosp: Optional[float] = 0.01,
                  hosp_rate_symp: Optional[Dict[Tuple[_AgeLimit, Risk], float]] = None,
                  death_rate_hosp: Optional[Dict[Tuple[_AgeLimit, Risk], float]] = None,
                  death_rate_needs_hosp: Optional[Dict[Tuple[_AgeLimit, Risk], float]] = None,
