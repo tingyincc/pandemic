@@ -122,6 +122,10 @@ class BaseMatplotLibViz(PandemicViz):
         ax.set_ylabel('persons')
         ax.yaxis.set_major_locator(MaxNLocator(integer=True))
 
+        num_arr = np.array(self._gts).shape[0]
+        df = pd.DataFrame(np.array(self._gts).reshape(num_arr,5).tolist(), columns=["Critical","Dead","Infected","None","Recovered"])
+        df.to_csv("global_testing_summary.csv")
+
     def plot_critical_summary(self, ax: Optional[Axes] = None, **kwargs: Any) -> None:
         ax = ax or plt.gca()
         gis = np.vstack(self._gis).squeeze()
