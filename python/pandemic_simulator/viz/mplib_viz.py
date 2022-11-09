@@ -15,7 +15,7 @@ from .pandemic_viz import PandemicViz
 from ..environment import PandemicObservation, InfectionSummary, PandemicSimState, PandemicSimConfig
 
 __all__ = ['BaseMatplotLibViz', 'SimViz', 'GymViz', 'PlotType']
-
+decay_function = "poly"
 
 class PlotType:
     global_infection_summary: str = 'gis'
@@ -26,12 +26,13 @@ class PlotType:
     location_visitor_visits: str = 'location_visitor_visits'
     infection_source = 'infection_source'
     cumulative_reward = 'cumulative_reward'
+    comp_prob = 'compliance_probability'
 
     @staticmethod
     def plot_order() -> List[str]:
         return [PlotType.global_infection_summary, PlotType.global_testing_summary, PlotType.critical_summary,
                 PlotType.stages, PlotType.location_assignee_visits, PlotType.location_visitor_visits,
-                PlotType.infection_source, PlotType.cumulative_reward]
+                PlotType.infection_source, PlotType.cumulative_reward, PlotType.comp_prob]
 
 
 class BaseMatplotLibViz(PandemicViz):
@@ -46,6 +47,8 @@ class BaseMatplotLibViz(PandemicViz):
     _gts: List[np.ndarray]
     _stages: List[np.ndarray]
     _rewards: List[float]
+
+    _comp_prob: List[float]
 
     _gis_legend: List[str]
     _critical_index: int
@@ -65,10 +68,21 @@ class BaseMatplotLibViz(PandemicViz):
         self._gis = []
         self._gts = []
         self._stages = []
+        self._comp_prob = []
 
         self._gis_legend = []
 
         plt.rc('axes', prop_cycle=cycler(color=inf_colors))
+
+    def get_compliance_prob(self, init_prob, day, decay_function=None, action = 0):
+        if decay_function == "poly":
+            return init_prob -  0.0001 * pow(day, 2)
+        elif decay_function == "linear":
+            return init_prob - 0.01 * day
+        elif decay_function == "exp":
+            return init_prob * 0.95 ** day
+
+        return init_prob
 
     @classmethod
     def from_config(cls: Type['BaseMatplotLibViz'], sim_config: PandemicSimConfig) -> 'BaseMatplotLibViz':
@@ -82,6 +96,7 @@ class BaseMatplotLibViz(PandemicViz):
         self._gis.append(obs.global_infection_summary)
         self._gts.append(obs.global_testing_summary)
         self._stages.append(obs.stage)
+        self._comp_prob.append(self.get_compliance_prob(1, obs.time_day[0][0], decay_function,  obs.stage.tolist()[0][0]))
 
     def record_state(self, state: PandemicSimState) -> None:
         obs = PandemicObservation.create_empty()
@@ -109,6 +124,8 @@ class BaseMatplotLibViz(PandemicViz):
 
         num_arr = np.array(self._gis).shape[0]
         df = pd.DataFrame(np.array(self._gis).reshape(num_arr,5).tolist(), columns=["Critical","Dead","Infected","None","Recovered"])
+        num_arr = np.array(self._comp_prob).shape[0]
+        df["Comp_prob"] = np.array(self._comp_prob).reshape(num_arr ,1)
         df.to_csv("global_infection_summary.csv")
 
     def plot_gts(self, ax: Optional[Axes] = None, **kwargs: Any) -> None:
@@ -144,6 +161,13 @@ class BaseMatplotLibViz(PandemicViz):
         ax.plot(stages)
         ax.set_ylim(-0.1, kwargs.get('num_stages', np.max(self._stages)) + 1)
         ax.set_title('Stage')
+        ax.set_xlabel('time (days)')
+        ax.yaxis.set_major_locator(MaxNLocator(integer=True))
+
+    def plot_compliance_probability(self, ax: Optional[Axes] = None, **kwargs: Any) -> None:
+        ax = ax or plt.gca()
+        ax.plot(self._comp_prob)
+        ax.set_title('Compliance Probability')
         ax.set_xlabel('time (days)')
         ax.yaxis.set_major_locator(MaxNLocator(integer=True))
 

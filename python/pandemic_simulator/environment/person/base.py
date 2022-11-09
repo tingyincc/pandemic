@@ -11,7 +11,7 @@ from ..location import Cemetery, Hospital
 
 __all__ = ['BasePerson']
 
-decay_function = "exp"
+decay_function = "poly"
 
 class BasePerson(Person):
     """Class that partially implements a sim person. """
@@ -87,6 +87,16 @@ class BasePerson(Person):
     @property
     def assigned_locations(self) -> Sequence[LocationID]:
         return self._home,
+
+    def get_compliance_prob(self, init_prob, day, decay_function=None, action = 0):
+        if decay_function == "poly":
+            return init_prob - 0.0001 * pow( day, 2)
+        elif decay_function == "linear":
+            return init_prob - 0.01 * day
+        elif decay_function == "exp":
+            return init_prob * 0.95 ** day
+
+        return init_prob
 
     def _sync(self, sim_time: SimTime) -> None:
         """Sync sim time specific variables."""
@@ -195,16 +205,6 @@ class BasePerson(Person):
                 return True
 
         return False
-    
-    def get_compliance_prob(self, init_prob, day, decay_function=None, action = 0):
-        if decay_function == "poly":
-            return init_prob - pow( 0.0001 * day, 2)
-        elif decay_function == "linear":
-            return init_prob - 0.01 * day
-        elif decay_function == "exp":
-            return init_prob * 0.95 ** day
-
-        return init_prob
 
     def get_social_gathering_location(self, sim_time) -> Optional[LocationID]:
         ags = self._state.avoid_gathering_size
