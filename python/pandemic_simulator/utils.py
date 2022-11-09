@@ -12,6 +12,50 @@ __all__ = ['required', 'abstract_class_property', 'checked_cast', 'shallow_asdic
 _T = TypeVar('_T')
 
 
+def get_compliance_prob(init_prob, day, cur_stage = 0):
+    decay_function="stage"
+
+    cal_prob = init_prob
+
+    if decay_function == "poly":
+        cal_prob = init_prob - 0.0001 * pow( day, 2)
+    elif decay_function == "linear":
+        cal_prob = init_prob - 0.01 * day
+    elif decay_function == "exp":
+        cal_prob = init_prob * 0.95 ** day
+    elif decay_function == "exp_increase":
+        cal_prob =  (1.05 ** day) /100
+    elif decay_function == "0":
+        cal_prob = 0.01
+    elif decay_function == "custom":
+        if day < 25:
+            cal_prob = 0.7 + 0.011*day
+        else:
+            cal_prob = 0.964 - 0.0001 * pow( day-25, 2)
+        # if day < 25:
+        #     cal_prob = 0.7 + 0.011*day
+        # else:
+        #     cal_prob = 0.964 - 0.007*(day-25)
+        # if day < 60:
+        #     cal_prob = 0.3 + 0.011*day
+        # else:
+        #     cal_prob = 0.96 - 0.007*(day-59)
+        # if day < 40:
+        #     return 0.7 + 0.007*day
+        # else:
+        #     return 0.99 - 0.01*(day-39)
+
+    elif decay_function == "stage":
+
+        cal_prob = init_prob - 0.01 * day * cur_stage
+
+    cal_prob = cal_prob if cal_prob >= 0 else 0
+    cal_prob = cal_prob if cal_prob <= 1 else 1
+
+    print(cal_prob, cur_stage)
+
+    return cal_prob
+
 def required() -> _T:
     def required_err() -> Any:
         raise ValueError('Missing required field')

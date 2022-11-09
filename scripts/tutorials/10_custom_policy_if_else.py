@@ -22,7 +22,8 @@ def run_pandemic_gym_env() -> None:
 
     # make env
 
-    wrap = ps.env.PandemicGymEnv.from_config(sim_config = sim_config, pandemic_regulations=ps.sh.italian_regulations)
+    #wrap = ps.env.PandemicGymEnv.from_config(sim_config = sim_config, pandemic_regulations=ps.sh.italian_regulations)
+    wrap = ps.env.PandemicGymEnv.from_config(sim_config = sim_config, pandemic_regulations=ps.sh.austin_regulations)
     start_day = 29 # march_1
 
     # setup viz
@@ -65,6 +66,19 @@ def run_pandemic_gym_env() -> None:
                 action = 3
             elif obs.time_day [...,0]>=start_day+74:
                 action = 2
+
+            # if obs.infection_above_threshold[...,0]:
+            #     action = 2
+            # elif obs.global_testing_summary[...,3]>100:
+            #     action = 0
+            # elif obs.global_testing_summary[...,2]>50:
+            #     action = 4
+            # elif obs.global_testing_summary[...,2]>20:
+            #     action = 3
+            # elif obs.global_testing_summary[...,2]>10:
+            #     action = 1
+            # else:
+            #     action = 0
 
             ########################################################################################################################################
 

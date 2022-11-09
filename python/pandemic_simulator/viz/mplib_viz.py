@@ -14,8 +14,9 @@ from .evaluation_plots import inf_colors
 from .pandemic_viz import PandemicViz
 from ..environment import PandemicObservation, InfectionSummary, PandemicSimState, PandemicSimConfig
 
+from ..utils import get_compliance_prob
+
 __all__ = ['BaseMatplotLibViz', 'SimViz', 'GymViz', 'PlotType']
-decay_function = "poly"
 
 class PlotType:
     global_infection_summary: str = 'gis'
@@ -74,16 +75,6 @@ class BaseMatplotLibViz(PandemicViz):
 
         plt.rc('axes', prop_cycle=cycler(color=inf_colors))
 
-    def get_compliance_prob(self, init_prob, day, decay_function=None, action = 0):
-        if decay_function == "poly":
-            return init_prob -  0.0001 * pow(day, 2)
-        elif decay_function == "linear":
-            return init_prob - 0.01 * day
-        elif decay_function == "exp":
-            return init_prob * 0.95 ** day
-
-        return init_prob
-
     @classmethod
     def from_config(cls: Type['BaseMatplotLibViz'], sim_config: PandemicSimConfig) -> 'BaseMatplotLibViz':
         return cls(num_persons=sim_config.num_persons, max_hospital_capacity=sim_config.max_hospital_capacity)
@@ -96,7 +87,7 @@ class BaseMatplotLibViz(PandemicViz):
         self._gis.append(obs.global_infection_summary)
         self._gts.append(obs.global_testing_summary)
         self._stages.append(obs.stage)
-        self._comp_prob.append(self.get_compliance_prob(1, obs.time_day[0][0], decay_function,  obs.stage.tolist()[0][0]))
+        self._comp_prob.append(get_compliance_prob(1, obs.time_day[0][0], obs.stage.tolist()[0][0]))
 
     def record_state(self, state: PandemicSimState) -> None:
         obs = PandemicObservation.create_empty()
