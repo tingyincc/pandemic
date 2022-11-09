@@ -13,14 +13,18 @@ _T = TypeVar('_T')
 
 
 def get_compliance_prob(init_prob, day, cur_stage = 0):
-    decay_function="stage"
+    decay_function="poly_increase"
 
     cal_prob = init_prob
 
     if decay_function == "poly":
         cal_prob = init_prob - 0.0001 * pow( day, 2)
+    elif decay_function == "poly_increase":
+        cal_prob = 0.0001 * pow( day, 2)
     elif decay_function == "linear":
         cal_prob = init_prob - 0.01 * day
+    elif decay_function == "linear_increase":
+        cal_prob = 0.01 * day
     elif decay_function == "exp":
         cal_prob = init_prob * 0.95 ** day
     elif decay_function == "exp_increase":
@@ -51,8 +55,6 @@ def get_compliance_prob(init_prob, day, cur_stage = 0):
 
     cal_prob = cal_prob if cal_prob >= 0 else 0
     cal_prob = cal_prob if cal_prob <= 1 else 1
-
-    print(cal_prob, cur_stage)
 
     return cal_prob
 
