@@ -11,6 +11,7 @@ from ..location import Cemetery, Hospital
 
 __all__ = ['BasePerson']
 
+decay_function = "exp"
 
 class BasePerson(Person):
     """Class that partially implements a sim person. """
@@ -136,12 +137,7 @@ class BasePerson(Person):
                 self.enter_location(self.home)
                 return None
 
-        # Original
-        # comply_to_regulation = self._numpy_rng.uniform() < self._regulation_compliance_prob
-        # Exponential
-        # comply_to_regulation = (self._numpy_rng.uniform() < (self._regulation_compliance_prob * 0.95 ** sim_time.day))
-        # Polynomial
-        comply_to_regulation = self._numpy_rng.uniform() < (self._regulation_compliance_prob - pow(0.0001*sim_time.day, 2))
+        comply_to_regulation = self._numpy_rng.uniform() < self.get_compliance_prob(self._regulation_compliance_prob, sim_time.day, decay_function)
 
         if (
                 not self._registry.get_person_quarantined_state(self._id) and comply_to_regulation and
@@ -199,18 +195,22 @@ class BasePerson(Person):
                 return True
 
         return False
+    
+    def get_compliance_prob(self, init_prob, day, decay_function=None, action = 0):
+        if decay_function == "poly":
+            return init_prob - pow( 0.0001 * day, 2)
+        elif decay_function == "linear":
+            return init_prob - 0.01 * day
+        elif decay_function == "exp":
+            return init_prob * 0.95 ** day
+
+        return init_prob
 
     def get_social_gathering_location(self, sim_time) -> Optional[LocationID]:
         ags = self._state.avoid_gathering_size
         loc_ids = self._registry.location_ids_with_social_events
         num_events = len(loc_ids)
-        # Original
-        # comply_to_regulation = self._numpy_rng.uniform() < self._regulation_compliance_prob
-        # Exponential
-        # comply_to_regulation = (self._numpy_rng.uniform() < (self._regulation_compliance_prob * 0.95 ** sim_time.day))
-        # Polynomial
-        comply_to_regulation = self._numpy_rng.uniform() < (self._regulation_compliance_prob - pow(0.0001*sim_time.day, 2))
-
+        comply_to_regulation = self._numpy_rng.uniform() <  self.get_compliance_prob(self._regulation_compliance_prob, sim_time.day, decay_function)
 
         if comply_to_regulation and ags == 0:
             return None
