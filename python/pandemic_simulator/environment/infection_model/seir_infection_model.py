@@ -35,17 +35,30 @@ class _AgeLimit(Enum):
     _200 = 200
 
 
+# _DEFAULT_HOSP_RATE_SYMP = {
+#     (_AgeLimit._4, Risk.LOW): 0.0279,
+#     (_AgeLimit._17, Risk.LOW): 0.0215,
+#     (_AgeLimit._49, Risk.LOW): 1.3215,
+#     (_AgeLimit._64, Risk.LOW): 2.8563,
+#     (_AgeLimit._200, Risk.LOW): 3.3873,
+#     (_AgeLimit._4, Risk.HIGH): 0.2791,
+#     (_AgeLimit._17, Risk.HIGH): 0.2146,
+#     (_AgeLimit._49, Risk.HIGH): 13.2154,
+#     (_AgeLimit._64, Risk.HIGH): 28.5634,
+#     (_AgeLimit._200, Risk.HIGH): 33.8733,
+# }
+
 _DEFAULT_HOSP_RATE_SYMP = {
     (_AgeLimit._4, Risk.LOW): 0.0279,
     (_AgeLimit._17, Risk.LOW): 0.0215,
-    (_AgeLimit._49, Risk.LOW): 1.3215,
-    (_AgeLimit._64, Risk.LOW): 2.8563,
-    (_AgeLimit._200, Risk.LOW): 3.3873,
-    (_AgeLimit._4, Risk.HIGH): 0.2791,
-    (_AgeLimit._17, Risk.HIGH): 0.2146,
-    (_AgeLimit._49, Risk.HIGH): 13.2154,
-    (_AgeLimit._64, Risk.HIGH): 28.5634,
-    (_AgeLimit._200, Risk.HIGH): 33.8733,
+    (_AgeLimit._49, Risk.LOW): 5.3215,
+    (_AgeLimit._64, Risk.LOW): 10.8563,
+    (_AgeLimit._200, Risk.LOW): 30.3873,
+    (_AgeLimit._4, Risk.HIGH): 2.791,
+    (_AgeLimit._17, Risk.HIGH): 12.146,
+    (_AgeLimit._49, Risk.HIGH): 23.2154,
+    (_AgeLimit._64, Risk.HIGH): 35.5634,
+    (_AgeLimit._200, Risk.HIGH): 60.8733,
 }
 
 _DEFAULT_DEATH_RATE_NEEDS_HOSP = {
@@ -130,18 +143,18 @@ class SEIRModel(InfectionModel):
                  exposed_rate: Optional[float] = None,
                  pre_asymp_rate: float = 1. / 2.3,
                  pre_symp_rate: float = 1. / 2.3,
-                 recovery_rate_asymp: Optional[float] = None,
-                 recovery_rate_symp_non_treated: Optional[float] = None,
-                 recovery_rate_needs_hosp: float = 0.0214286,
-                 recovery_rate_hosp: Optional[float] = None,
+                 recovery_rate_asymp: Optional[float] = 0.02,
+                 recovery_rate_symp_non_treated: Optional[float] = 0.02,
+                 recovery_rate_needs_hosp: float = 0.00214286,
+                 recovery_rate_hosp: Optional[float] = 0.003,
                  hosp_rate_symp: Optional[Dict[Tuple[_AgeLimit, Risk], float]] = None,
                  death_rate_hosp: Optional[Dict[Tuple[_AgeLimit, Risk], float]] = None,
                  death_rate_needs_hosp: Optional[Dict[Tuple[_AgeLimit, Risk], float]] = None,
-                 from_symp_to_hosp_rate: float = 0.1695,
+                 from_symp_to_hosp_rate: float = 0.8695,
                  from_needs_hosp_to_death_rate: float = 0.3,
-                 from_hosp_to_death_rate: Optional[float] = None,
+                 from_hosp_to_death_rate: Optional[float] = 0.1,
                  spread_probability_params: Optional[SpreadProbabilityParams] = None,
-                 pandemic_start_limit: int = 5):
+                 pandemic_start_limit: int = 1):
         self._numpy_rng = globals.numpy_rng
         assert self._numpy_rng, 'No numpy rng found. Either pass a rng or set the default repo wide rng.'
 
