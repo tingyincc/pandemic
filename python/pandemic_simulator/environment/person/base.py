@@ -9,8 +9,9 @@ from ..interfaces import Person, PersonID, PersonState, LocationID, Risk, Regist
     SimTime, NoOP, NOOP, SimTimeTuple, PandemicTestResult, ContactTracer, globals
 from ..location import Cemetery, Hospital
 
-__all__ = ['BasePerson']
+from ...utils import get_compliance_prob
 
+__all__ = ['BasePerson']
 
 class BasePerson(Person):
     """Class that partially implements a sim person. """
@@ -28,6 +29,8 @@ class BasePerson(Person):
 
     _regulation_compliance_prob: float
     _go_home: bool
+
+    _stage: int
 
     def __init__(self,
                  person_id: PersonID,
@@ -58,6 +61,7 @@ class BasePerson(Person):
         self._cemetery_ids = list(self._registry.location_ids_of_type(Cemetery))
         self._hospital_ids = list(self._registry.location_ids_of_type(Hospital))
         self._go_home = False
+        self._stage = 0
 
     def enter_location(self, location_id: LocationID) -> bool:
         if location_id == self._home:
@@ -86,6 +90,8 @@ class BasePerson(Person):
     @property
     def assigned_locations(self) -> Sequence[LocationID]:
         return self._home,
+
+    
 
     def _sync(self, sim_time: SimTime) -> None:
         """Sync sim time specific variables."""
@@ -136,8 +142,8 @@ class BasePerson(Person):
                 self.enter_location(self.home)
                 return None
 
-        #comply_to_regulation = self._numpy_rng.uniform() < self._regulation_compliance_prob
-        comply_to_regulation = self._numpy_rng.uniform() < (self._regulation_compliance_prob - 0.01 * sim_time.day)
+        comply_to_regulation = self._numpy_rng.uniform() < get_compliance_prob(self._regulation_compliance_prob, sim_time.day, self._stage)
+
         if (
                 not self._registry.get_person_quarantined_state(self._id) and comply_to_regulation and
 
@@ -180,6 +186,8 @@ class BasePerson(Person):
         self._state.infection_spread_multiplier = (
                 1 - (1 - self._state.infection_spread_multiplier) * self._regulation_compliance_prob)
 
+        self._stage = regulation.stage
+
     def _contact_positive(self, contacts: Sequence[PersonID]) -> bool:
         for contact in contacts:
             if self._registry.get_person_test_result(contact) in {PandemicTestResult.POSITIVE,
@@ -199,7 +207,7 @@ class BasePerson(Person):
         ags = self._state.avoid_gathering_size
         loc_ids = self._registry.location_ids_with_social_events
         num_events = len(loc_ids)
-        comply_to_regulation = (self._numpy_rng.uniform() < (self._regulation_compliance_prob * 0.95 ** sim_time.day))
+        comply_to_regulation = self._numpy_rng.uniform() <  get_compliance_prob(self._regulation_compliance_prob, sim_time.day, self._stage)
 
         if comply_to_regulation and ags == 0:
             return None
