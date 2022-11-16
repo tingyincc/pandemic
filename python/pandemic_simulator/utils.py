@@ -12,15 +12,15 @@ __all__ = ['required', 'abstract_class_property', 'checked_cast', 'shallow_asdic
 _T = TypeVar('_T')
 
 
-def get_compliance_prob(init_prob, day, cur_stage = 0):
-    decay_function="poly_increase"
+def get_compliance_prob(init_prob, day, cur_stage = 0)->int:
+    decay_function="custom"
 
     cal_prob = init_prob
 
     if decay_function == "poly":
         cal_prob = init_prob - 0.0001 * pow( day, 2)
     elif decay_function == "poly_increase":
-        cal_prob = 0.0001 * pow( day, 2)
+        cal_prob = np.log10(0.1*day+1)
     elif decay_function == "linear":
         cal_prob = init_prob - 0.01 * day
     elif decay_function == "linear_increase":
@@ -32,10 +32,19 @@ def get_compliance_prob(init_prob, day, cur_stage = 0):
     elif decay_function == "0":
         cal_prob = 0.01
     elif decay_function == "custom":
+        # if day < 25:
+        #     cal_prob = (1.211 ** day) /100
+        # else:
+        #     cal_prob = 0.989 - 0.0001 * pow( day-25, 2)
         if day < 25:
-            cal_prob = 0.7 + 0.011*day
+            cal_prob = np.log10(0.36*day+1)
         else:
-            cal_prob = 0.964 - 0.0001 * pow( day-25, 2)
+            cal_prob = 0.984 - 0.0001 * pow( day-25, 2)
+
+        # if day < 25:
+        #     cal_prob = 0.7 + 0.011*day
+        # else:
+        #     cal_prob = 0.964 - 0.0001 * pow( day-25, 2)
         # if day < 25:
         #     cal_prob = 0.7 + 0.011*day
         # else:
